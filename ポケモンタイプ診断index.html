@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>キャリアタイプ診断 | CAREER TYPE CHECK</title>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#e8e8e0;min-height:100vh;font-family:'DotGothic16',monospace;}
+
+/* ========== ゲームボーイ部分 ========== */
+.gb-outer{display:flex;justify-content:center;padding:1.5rem 0 2rem;}
+.gb-device{background:#c0bfbe;border-radius:14px 14px 50px 50px;padding:18px 18px 36px;width:360px;box-shadow:inset 0 3px 0 #e8e6e3,inset 0 -3px 0 #888,2px 4px 0 #666;font-family:'DotGothic16',monospace;}
+.gb-label{text-align:center;font-family:'Press Start 2P',monospace;font-size:7px;color:#6a6a8a;letter-spacing:3px;margin-bottom:10px;}
+.gb-screen-bezel{background:#3a3a5a;border-radius:8px 8px 24px 24px;padding:16px 14px 14px;margin-bottom:18px;box-shadow:inset 0 3px 8px rgba(0,0,0,0.6);}
+.gb-power-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.gb-power-dot{width:6px;height:6px;border-radius:50%;background:#e03030;box-shadow:0 0 4px #e03030;}
+.gb-power-label{font-family:'Press Start 2P',monospace;font-size:5px;color:#9090b0;letter-spacing:1px;}
+.gb-screen{background:#8bac0f;border-radius:4px;padding:10px;min-height:230px;position:relative;box-shadow:inset 0 0 10px rgba(0,0,0,0.4);}
+.gb-scanlines{position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px);border-radius:4px;pointer-events:none;z-index:10;}
+.gb-screen-title{font-family:'Press Start 2P',monospace;color:#0f380f;font-size:6px;text-align:center;margin-bottom:8px;letter-spacing:1px;}
+.gb-prog-bg{background:#306230;height:4px;margin-bottom:8px;}
+.gb-prog-fill{background:#0f380f;height:4px;transition:width 0.3s;}
+.gb-qnum{color:#306230;font-size:13px;margin-bottom:4px;}
+.gb-qtext{color:#0f380f;font-size:14px;line-height:1.7;margin-bottom:8px;min-height:56px;white-space:pre-line;}
+.gb-hint{color:#306230;font-size:11px;margin-bottom:6px;}
+.gb-choices{display:flex;flex-direction:column;gap:4px;}
+.gb-choice{background:transparent;border:2px solid #0f380f;color:#0f380f;font-family:'DotGothic16',monospace;font-size:13px;padding:5px 8px;text-align:left;cursor:pointer;line-height:1.5;transition:background 0.1s,color 0.1s;}
+.gb-choice:hover,.gb-choice:focus{background:#0f380f;color:#8bac0f;outline:none;}
+
+/* トランジション画面 */
+.gb-transit{display:none;text-align:center;padding-top:20px;}
+.gb-transit-title{font-family:'Press Start 2P',monospace;color:#0f380f;font-size:7px;margin-bottom:16px;letter-spacing:1px;}
+.gb-transit-icon{font-size:36px;margin-bottom:12px;display:block;}
+.gb-transit-name{color:#0f380f;font-size:18px;font-weight:bold;margin-bottom:6px;}
+.gb-transit-sub{color:#306230;font-size:12px;margin-bottom:16px;}
+.gb-transit-btn{background:#0f380f;color:#8bac0f;border:none;font-family:'DotGothic16',monospace;font-size:14px;padding:8px 16px;cursor:pointer;letter-spacing:1px;}
+.gb-transit-btn:hover{background:#306230;}
+
+/* ゲームボーイコントローラー */
+.gb-controls{display:flex;justify-content:space-between;align-items:center;padding:0 8px;}
+.gb-dpad{display:grid;grid-template-columns:repeat(3,22px);grid-template-rows:repeat(3,22px);gap:2px;}
+.dp{background:#888;border-radius:2px;}
+.dp.c{background:#777;border-radius:2px;}
+.gb-ab{display:flex;gap:12px;align-items:center;}
+.ab-btn{width:26px;height:26px;border-radius:50%;background:#8a3a6a;box-shadow:0 2px 0 #5a2a4a;border:none;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:7px;color:#e0a0c0;display:flex;align-items:center;justify-content:center;transition:transform 0.05s,box-shadow 0.05s;}
+.ab-btn:active{transform:translateY(2px);box-shadow:none;}
+.gb-start-select{display:flex;justify-content:center;gap:20px;margin-top:14px;}
+.ss-btn{width:28px;height:8px;border-radius:4px;background:#888;cursor:pointer;transition:transform 0.05s;}
+.ss-btn:active{transform:scale(0.95);}
+.ss-label{font-family:'Press Start 2P',monospace;font-size:4px;color:#666;text-align:center;margin-top:3px;}
+.btn-col{display:flex;flex-direction:column;align-items:center;}
+
+/* ========== 結果ページ ========== */
+.result-page{display:none;max-width:480px;margin:0 auto;padding:0 0 60px;}
+
+.rp-hero{padding:32px 20px 24px;text-align:center;color:#fff;}
+.rp-eyebrow{font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:2px;opacity:0.8;margin-bottom:12px;}
+.rp-icon-circle{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:40px;box-shadow:0 4px 16px rgba(0,0,0,0.2);}
+.rp-main-name{font-family:'Press Start 2P',monospace;font-size:13px;letter-spacing:1px;margin-bottom:6px;}
+.rp-sub-name{font-size:14px;opacity:0.85;}
+
+.rp-body{background:#fff;border-radius:0;padding:20px;}
+.rp-section{margin-bottom:24px;}
+.rp-section-label{font-family:'Press Start 2P',monospace;font-size:8px;color:#333;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.rp-section-label::before{content:'▶';font-size:7px;}
+
+.rp-desc-main{font-size:15px;line-height:1.9;color:#333;margin-bottom:10px;}
+.rp-desc-sub{font-size:13px;line-height:1.8;color:#666;margin-bottom:10px;}
+.rp-combo-box{padding:12px 14px;border-radius:4px;font-size:13px;line-height:1.8;color:#fff;}
+
+.rp-str-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;}
+.rp-str-item:last-child{border-bottom:none;}
+.rp-str-icon{font-size:11px;margin-top:3px;flex-shrink:0;}
+.rp-str-text{font-size:14px;line-height:1.7;color:#333;}
+
+/* 強みを伸ばすSTEP */
+.rp-step{margin-bottom:12px;position:relative;}
+.rp-step-badge{display:inline-block;font-family:'Press Start 2P',monospace;font-size:6px;color:#fff;padding:4px 10px;margin-bottom:8px;}
+.rp-step-text{font-size:14px;line-height:1.8;color:#333;}
+
+/* フェードロック */
+.rp-step-visible{}
+.rp-steps-locked{position:relative;overflow:hidden;}
+.rp-steps-locked-content{padding-bottom:40px;}
+.rp-fade-overlay{position:absolute;bottom:0;left:0;right:0;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:8px;}
+.rp-note-cta{font-family:'DotGothic16',monospace;font-size:14px;padding:10px 20px;border:none;color:#fff;cursor:pointer;letter-spacing:1px;margin-top:6px;}
+.rp-note-cta:hover{opacity:0.85;}
+.rp-locked-label{font-family:'Press Start 2P',monospace;font-size:6px;color:#999;margin-bottom:6px;}
+
+/* スコアバー */
+.rp-score-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.rp-score-label{font-size:12px;color:#666;width:80px;flex-shrink:0;}
+.rp-score-track{flex:1;background:#eee;border-radius:2px;height:8px;}
+.rp-score-fill{height:8px;border-radius:2px;transition:width 0.8s;}
+.rp-score-num{font-size:12px;color:#666;width:36px;text-align:right;}
+
+/* noteセクション */
+.rp-note-box{border:2px solid #333;padding:18px;text-align:center;}
+.rp-note-eyebrow{font-family:'Press Start 2P',monospace;font-size:6px;color:#999;letter-spacing:2px;margin-bottom:10px;}
+.rp-note-text{font-size:14px;line-height:1.8;color:#333;margin-bottom:12px;}
+.rp-note-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:14px;}
+.rp-note-tag{font-size:11px;padding:3px 10px;border-radius:20px;color:#fff;}
+.rp-note-btn{font-family:'DotGothic16',monospace;font-size:14px;padding:12px 24px;border:none;cursor:pointer;color:#fff;letter-spacing:1px;display:block;width:100%;}
+.rp-note-btn:hover{opacity:0.85;}
+
+.rp-restart{display:block;width:calc(100% - 40px);margin:20px auto 0;padding:12px;background:#333;color:#fff;font-family:'DotGothic16',monospace;font-size:14px;border:none;cursor:pointer;letter-spacing:1px;}
+.rp-restart:hover{background:#555;}
+
+/* ポップアップ */
+.popup-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.popup-overlay.active{display:flex;}
+.popup-box{background:#0f380f;border:3px solid #8bac0f;padding:24px;max-width:300px;width:90%;text-align:center;}
+.popup-icon{font-size:32px;margin-bottom:12px;}
+.popup-msg{font-family:'DotGothic16',monospace;color:#8bac0f;font-size:15px;line-height:1.8;margin-bottom:16px;}
+.popup-close{background:#8bac0f;color:#0f380f;border:none;font-family:'DotGothic16',monospace;font-size:13px;padding:6px 20px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- ゲームボーイ -->
+<div id="gb-wrap">
+  <div class="gb-outer">
+    <div class="gb-device">
+      <div class="gb-label">CAREER BOY ™</div>
+      <div class="gb-screen-bezel">
+        <div class="gb-power-row">
+          <div class="gb-power-dot"></div>
+          <div class="gb-power-label">BATTERY</div>
+        </div>
+        <div class="gb-screen" id="gb-screen">
+          <div class="gb-scanlines"></div>
+          <!-- クイズ画面 -->
+          <div id="quiz-view">
+            <div class="gb-screen-title">CAREER TYPE CHECK</div>
+            <div class="gb-prog-bg"><div class="gb-prog-fill" id="prog-fill" style="width:5%"></div></div>
+            <div class="gb-qnum" id="gb-qnum">しつもん 1 / 20</div>
+            <div class="gb-qtext" id="gb-qtext"></div>
+            <div class="gb-hint">▶ ひとつえらんでね</div>
+            <div class="gb-choices" id="gb-choices"></div>
+          </div>
+          <!-- トランジション画面 -->
+          <div class="gb-transit" id="transit-view">
+            <div class="gb-transit-title">★ YOUR TYPE ★</div>
+            <span class="gb-transit-icon" id="tr-icon"></span>
+            <div class="gb-transit-name" id="tr-name"></div>
+            <div class="gb-transit-sub" id="tr-sub"></div>
+            <button class="gb-transit-btn" id="go-result-btn">▶ けっかをみる</button>
+          </div>
+        </div>
+      </div>
+      <!-- コントローラー -->
+      <div class="gb-controls">
+        <div class="gb-dpad">
+          <div></div><div class="dp"></div><div></div>
+          <div class="dp"></div><div class="dp c"></div><div class="dp"></div>
+          <div></div><div class="dp"></div><div></div>
+        </div>
+        <div class="gb-ab">
+          <div class="btn-col">
+            <button class="ab-btn" id="btn-b">B</button>
+            <div class="ss-label">B</div>
+          </div>
+          <div class="btn-col">
+            <button class="ab-btn" id="btn-a">A</button>
+            <div class="ss-label">A</div>
+          </div>
+        </div>
+      </div>
+      <div class="gb-start-select">
+        <div class="btn-col">
+          <button class="ss-btn" id="btn-select"></button>
+          <div class="ss-label">SELECT</div>
+        </div>
+        <div class="btn-col">
+          <button class="ss-btn" id="btn-start"></button>
+          <div class="ss-label">START</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 結果ページ -->
+<div class="result-page" id="result-page">
+  <div class="rp-hero" id="rp-hero">
+    <div class="rp-eyebrow">★ YOUR TYPE RESULT ★</div>
+    <div class="rp-icon-circle" id="rp-icon-circle"><span id="rp-icon"></span></div>
+    <div class="rp-main-name" id="rp-main-name"></div>
+    <div class="rp-sub-name" id="rp-sub-name"></div>
+  </div>
+  <div class="rp-body">
+    <!-- あなたはこんな人 -->
+    <div class="rp-section">
+      <div class="rp-section-label">あなたはこんな人</div>
+      <div class="rp-desc-main" id="rp-main-desc"></div>
+      <div class="rp-desc-sub" id="rp-sub-desc"></div>
+      <div class="rp-combo-box" id="rp-combo"></div>
+    </div>
+    <!-- あなたの強み -->
+    <div class="rp-section">
+      <div class="rp-section-label">あなたの強み</div>
+      <div id="rp-strengths"></div>
+    </div>
+    <!-- 強みを伸ばす -->
+    <div class="rp-section">
+      <div class="rp-section-label">強みをもっと伸ばすには</div>
+      <!-- STEP1は見える -->
+      <div class="rp-step-visible" id="rp-step1"></div>
+      <!-- STEP2,3はフェードロック -->
+      <div class="rp-steps-locked">
+        <div class="rp-steps-locked-content" id="rp-steps23"></div>
+        <div class="rp-fade-overlay" id="rp-fade-overlay">
+          <div class="rp-locked-label">★ CONTINUE ON NOTE ★</div>
+          <button class="rp-note-cta" id="rp-step-note-btn">▶ noteで続きを読む</button>
+        </div>
+      </div>
+    </div>
+    <!-- タイプスコア -->
+    <div class="rp-section">
+      <div class="rp-section-label">タイプスコア</div>
+      <div id="rp-score"></div>
+    </div>
+    <!-- noteへ誘導 -->
+    <div class="rp-section">
+      <div class="rp-note-box" id="rp-note-box">
+        <div class="rp-note-eyebrow">★ もっと深く知りたい人へ ★</div>
+        <div class="rp-note-text" id="rp-note-text"></div>
+        <div class="rp-note-tags" id="rp-note-tags"></div>
+        <button class="rp-note-btn" id="rp-note-btn">▶ noteで続きを読む</button>
+      </div>
+    </div>
+    <button class="rp-restart" id="restart-btn">▶ もう一度あそぶ</button>
+  </div>
+</div>
+
+<!-- ポップアップ -->
+<div class="popup-overlay" id="popup">
+  <div class="popup-box">
+    <div class="popup-icon" id="popup-icon"></div>
+    <div class="popup-msg" id="popup-msg"></div>
+    <button class="popup-close" onclick="closePopup()">▶ とじる</button>
+  </div>
+</div>
+
+<script>
+// ========== データ定義 ==========
+const TYPES = [
+  {
+    name:"ほのおタイプ", en:"FIRE TYPE", icon:"🔥", sub:"リーダー・牽引者",
+    tc:{ bg:"#e05030", dark:"#a03020", accent:"#fff0ee", trackBg:"#fdd", heroGrad:"linear-gradient(135deg,#e05030,#c03020)", comboBg:"#c04020", noteBtn:"#e05030", noteBtnHover:"#c03020" },
+    mainDesc:"目標を定めたら全力で突き進む、推進力の塊。チームを引っ張り、困難な状況でも諦めない。",
+    subDesc:"その行動力と熱量が周囲を動かす。決断の速さと責任感が強み。",
+    strengths:["目標への推進力とリーダーシップ","困難な状況でも諦めない粘り強さ","チームを鼓舞する熱量と存在感","決断力と実行スピード"],
+    grow:[
+      {phase:"STEP 1",text:"自分の「燃えるポイント」を言語化する。何に情熱を感じるか書き出してみよう。"},
+      {phase:"STEP 2",text:"チームメンバーの強みを活かす「任せ方」を学ぶ。全部自分でやらなくていい。"},
+      {phase:"STEP 3",text:"長期視点でキャリアを設計する。5年後の自分像から逆算してみよう。"}
+    ],
+    noteText:"あなたのリーダーシップをさらに磨くヒント、noteで公開中！",
+    noteTags:["#リーダーシップ","#推進力","#キャリア設計"]
+  },
+  {
+    name:"でんきタイプ", en:"ELECTRIC TYPE", icon:"⚡", sub:"クリエイター・発想家",
+    tc:{ bg:"#e0b020", dark:"#a07010", accent:"#fffbee", trackBg:"#fff3cc", heroGrad:"linear-gradient(135deg,#e0b020,#c09010)", comboBg:"#c09010", noteBtn:"#e0b020", noteBtnHover:"#c09010" },
+    mainDesc:"誰も思いつかないアイデアを次々と生み出す、創造のスペシャリスト。変化を恐れず、新しい価値を生み出す。",
+    subDesc:"その発想力と表現力が組織に新風を吹き込む。ひらめきと熱中力が強み。",
+    strengths:["独創的なアイデアを生み出す発想力","変化や新しいことへの高い適応力","熱中すると驚くほどのアウトプット","「なぜ？」を問い続ける好奇心"],
+    grow:[
+      {phase:"STEP 1",text:"アイデアを「形にする習慣」をつける。思いついたらすぐメモ・プロトタイプ化。"},
+      {phase:"STEP 2",text:"アイデアを「人に伝える力」を磨く。プレゼンや文章で説得力を高めよう。"},
+      {phase:"STEP 3",text:"実現するためのプロジェクト管理を学ぶ。発想を現実にする実行力がカギ。"}
+    ],
+    noteText:"あなたの創造力をビジネスに活かすヒント、noteで公開中！",
+    noteTags:["#クリエイティブ","#発想力","#アイデア"]
+  },
+  {
+    name:"エスパータイプ", en:"PSYCHIC TYPE", icon:"🔮", sub:"アナリスト・戦略家",
+    tc:{ bg:"#9050c0", dark:"#6030a0", accent:"#f5eeff", trackBg:"#e8d5ff", heroGrad:"linear-gradient(135deg,#9050c0,#7030a0)", comboBg:"#7030a0", noteBtn:"#9050c0", noteBtnHover:"#7030a0" },
+    mainDesc:"データと論理で真実を見抜く、分析のプロフェッショナル。複雑な問題を整理し、最適解を導き出す。",
+    subDesc:"その洞察力と思考の深さが、チームの意思決定を支える。冷静さと精緻さが強み。",
+    strengths:["データと論理による高い分析力","複雑な問題を構造化して整理する力","感情に流されない冷静な判断力","深く考え抜く思考の粘り強さ"],
+    grow:[
+      {phase:"STEP 1",text:"「分析→仮説→実証」のサイクルを意識して日々の業務に取り入れてみよう。"},
+      {phase:"STEP 2",text:"分析結果を「わかりやすく伝える」トレーニングをしよう。可視化スキルが武器になる。"},
+      {phase:"STEP 3",text:"感情面のコミュニケーションも磨く。論理だけでなく共感が伝わるとさらに強い。"}
+    ],
+    noteText:"あなたの分析力を最大化する方法、noteで公開中！",
+    noteTags:["#論理思考","#分析力","#戦略"]
+  },
+  {
+    name:"みずタイプ", en:"WATER TYPE", icon:"💧", sub:"コネクター・調和者",
+    tc:{ bg:"#3090e0", dark:"#1060b0", accent:"#eef6ff", trackBg:"#cce5ff", heroGrad:"linear-gradient(135deg,#3090e0,#1060c0)", comboBg:"#1070c0", noteBtn:"#3090e0", noteBtnHover:"#1060b0" },
+    mainDesc:"人と人をつなぎ、チームの空気を整える、調和のスペシャリスト。相手の気持ちを汲み取り、全員が動きやすい環境を作る。",
+    subDesc:"その共感力と気配りがチームの結束を生む。傾聴力と柔軟さが強み。",
+    strengths:["相手の気持ちを汲み取る共感力","チームの関係性を整える調整力","誰とでも信頼関係を築ける傾聴力","柔軟に状況に適応するしなやかさ"],
+    grow:[
+      {phase:"STEP 1",text:"「自分の意見を伝える」練習をしよう。共感力を保ちながら、主張する力も磨こう。"},
+      {phase:"STEP 2",text:"1on1や面談スキルを学ぶ。人を引き出す質問力がさらに強みになる。"},
+      {phase:"STEP 3",text:"チームのパフォーマンスを数字で語る習慣をつけよう。貢献を見えやすくすることが大切。"}
+    ],
+    noteText:"あなたの共感力をキャリアに活かす方法、noteで公開中！",
+    noteTags:["#共感力","#コミュニケーション","#チームビルディング"]
+  },
+  {
+    name:"くさタイプ", en:"GRASS TYPE", icon:"🌿", sub:"スペシャリスト・継続者",
+    tc:{ bg:"#409040", dark:"#206020", accent:"#efffee", trackBg:"#ccefcc", heroGrad:"linear-gradient(135deg,#409040,#206030)", comboBg:"#208030", noteBtn:"#409040", noteBtnHover:"#206020" },
+    mainDesc:"コツコツと積み上げ、確実に成果を出す、継続のプロフェッショナル。信頼性の高さと専門性の深さが武器。",
+    subDesc:"その堅実さと誠実さがチームの土台を支える。継続力と丁寧さが強み。",
+    strengths:["継続力と安定したアウトプット","専門分野を深く掘り下げる探求心","約束を守る高い信頼性と誠実さ","丁寧で質の高い仕事への こだわり"],
+    grow:[
+      {phase:"STEP 1",text:"自分の「得意領域」を棚卸しして言語化しよう。専門性こそがあなたの最大の武器。"},
+      {phase:"STEP 2",text:"自分のスキルを外に発信する習慣をつけよう。SNSやnoteでアウトプットを始めてみよう。"},
+      {phase:"STEP 3",text:"「変化を楽しむ思考」を少しずつ鍛えよう。安定と成長、両方を手に入れられる。"}
+    ],
+    noteText:"あなたの継続力と専門性を最大化するヒント、noteで公開中！",
+    noteTags:["#専門性","#継続力","#スペシャリスト"]
+  }
+];
+
+const COMBOS = [
+  ["情熱と責任感の塊。動き続ける人。","熱量×発想が爆発する。誰も止められない。","直感と分析を使い分ける戦略的リーダー。","チームを引っ張りながら全員を大切にする。","粘り強さと熱量を兼ね備えた、不屈の人。"],
+  ["情熱的なクリエイター。燃えながら生み出す。","ひらめきの連鎖が止まらない天才肌。","アイデアを論理で磨く、知的クリエイター。","発想と共感で人を惹きつける。","コツコツと創り続ける職人気質のクリエイター。"],
+  ["戦略で動くリーダー。思考と行動の融合。","データとひらめきを融合させる異色の才能。","深い思考と冷静な判断の完成形。","分析と共感のバランスが取れた名参謀。","着実に積み上げる研究者タイプの戦略家。"],
+  ["熱く、でも優しく人を引っ張る。","感性豊かで周囲を和ませるムードメーカー。","論理的に、でも温かく人と向き合う。","調和と共感の体現者。チームの心臓。","丁寧に、誠実に人と関わり続ける信頼の人。"],
+  ["熱量を持って、でも着実に進む。","コツコツした努力に創造性が加わる。","専門性と分析力を兼ね備えた頼れる存在。","誠実さと共感力を持つ、信頼の専門家。","積み上げてきた実力と経験が最大の武器。"]
+];
+
+const QA = [
+  {q:"休日、友人から急に\n「今日どこか行こう」と\n誘われたら？",opts:[["行き先を即決して引っ張る",0],["面白い穴場を提案する",1],["混雑を調べてから決める",2],["みんなの希望を聞く",3],["いつものお気に入りを提案",4]]},
+  {q:"学生時代の\nグループ発表での\n役割は？",opts:[["全体の進行を仕切る",0],["デザインや演出を担当",1],["資料やデータをまとめる",2],["メンバーの調整役",3],["担当パートを丁寧に仕上げる",4]]},
+  {q:"旅行の計画を立てる\nとき、あなたは？",opts:[["目的と予算をまず決める",0],["映えスポットを探す",1],["口コミを徹底リサーチ",2],["みんなが楽しめるか考える",3],["いつものエリアを深く楽しむ",4]]},
+  {q:"「ありがとう」と\n言われるとしたら\nどんな場面？",opts:[["決断してくれて助かった",0],["あのアイデア最高だった",1],["あの分析が正確だった",2],["話を聞いてくれてよかった",3],["最後まで続けてくれた",4]]},
+  {q:"ゲームをするなら\nどのスタイルが好き？",opts:[["攻略を効率よく進める",0],["世界観やストーリーを楽しむ",1],["システムを研究して極める",2],["仲間と一緒にプレイする",3],["コツコツ育成・収集する",4]]},
+  {q:"仕事終わりの\n理想の1時間は？",opts:[["翌日の戦略を考える",0],["動画やアート鑑賞",1],["気になることを深く調べる",2],["友人や家族と話す",3],["趣味をマイペースに続ける",4]]},
+  {q:"困っている人を見たとき\nまず何をする？",opts:[["「どうすれば解決する？」と考える",0],["「こんな方法もあるよ」と提案する",1],["「何が問題か」を一緒に整理する",2],["まず話を聞く",3],["できる範囲でそっとサポートする",4]]},
+  {q:"仕事でモヤモヤするのは\nどんなとき？",opts:[["裁量がなく、自分で決められないとき",0],["決まりきったことしかできないとき",1],["根拠なく物事が決まるとき",2],["チームの空気が悪いとき",3],["急な変化や方針転換があるとき",4]]},
+  {q:"新しいスキルを身につけるなら\nどのやり方が好き？",opts:[["目標を決めて一気に習得",0],["独自のやり方を試しながら",1],["体系的に理論から学ぶ",2],["誰かと一緒に学ぶ",3],["毎日少しずつ継続する",4]]},
+  {q:"あなたの「一番の武器」は\nどれに近い？",opts:[["突破力と行動力",0],["発想力と表現力",1],["分析力と論理力",2],["共感力と傾聴力",3],["継続力と信頼性",4]]},
+  {q:"大きなプロジェクトで\n自分が輝けるのは？",opts:[["全体をまとめてゴールへ導くとき",0],["新しい仕掛けやアイデアを出すとき",1],["データと根拠で方向性を示すとき",2],["チームの関係性を整えるとき",3],["確実にやりきって成果を出すとき",4]]},
+  {q:"自分が成長したと\n感じる瞬間は？",opts:[["高い目標をクリアしたとき",0],["新しい表現が形になったとき",1],["正しい答えを導き出せたとき",2],["誰かの力になれたとき",3],["地道な努力が実ったとき",4]]},
+  {q:"チームで意見が\nぶつかったとき、あなたは？",opts:[["方向性を明確にして決断する",0],["第三の選択肢を提案する",1],["論点を整理して建設的に議論する",2],["全員の意見を引き出して合意を作る",3],["感情的にならず着実に前進する",4]]},
+  {q:"理想の上司は\nどんなタイプ？",opts:[["任せてくれて結果で評価してくれる",0],["自由に動かせてくれる",1],["論理的に指示してくれる",2],["話をよく聞いてくれる",3],["丁寧に教えてくれる",4]]},
+  {q:"「いい仕事」だと\n思える条件は？",opts:[["達成感と結果が明確に出る",0],["自分らしさが発揮できる",1],["根拠と再現性がある",2],["チームや誰かの役に立っている",3],["質が高く丁寧に仕上がっている",4]]},
+  {q:"ストレスを感じるのは\nどんなとき？",opts:[["結果が出ない・評価されないとき",0],["型にはめられて動けないとき",1],["感情論で物事が動くとき",2],["人間関係がギスギスしているとき",3],["やり方がコロコロ変わるとき",4]]},
+  {q:"10年後の自分に\n近いイメージは？",opts:[["組織やチームをリードしている",0],["自分の作品・サービスを持っている",1],["専門家として信頼されている",2],["人の成長を支える仕事をしている",3],["一つの分野でプロになっている",4]]},
+  {q:"自分のことを\n一言で表すなら？",opts:[["行動する人",0],["生み出す人",1],["考え抜く人",2],["寄り添う人",3],["積み上げる人",4]]},
+  {q:"転職活動で\n最も大切にしたいのは？",opts:[["成長できる環境・裁量の大きさ",0],["自分らしさを活かせる仕事",1],["論理的に納得できる仕事内容",2],["人間関係・チームの雰囲気",3],["安定性・長く続けられる環境",4]]},
+  {q:"最後に。\nキャリアで一番恐れていることは？",opts:[["チャレンジしないまま終わること",0],["つまらない仕事を続けること",1],["根拠のない判断をしてしまうこと",2],["孤立してしまうこと",3],["積み上げたものを失うこと",4]]}
+];
+
+// ========== ボタン励まし ==========
+const MSG_A = [
+  {icon:"⚡",msg:"きみの強みは、まだ眠ってる。\nさあ、目覚めさせよう。"},
+  {icon:"🔥",msg:"てんしょくは、まけじゃない。\nしんかだ。"},
+  {icon:"🌟",msg:"あなたのタイプは、かえられない。\nでも、つよくなれる。"},
+  {icon:"💪",msg:"レベルアップのタイミングは、\nじぶんで決めていい。"},
+  {icon:"🚀",msg:"にげてもいい。\nそれも せんりゃくだ。"}
+];
+const MSG_B = [
+  {icon:"😅",msg:"だいじょうぶ、まだLv.1だ。\nここからだよ。"},
+  {icon:"💤",msg:"HP0になったら、\nねむって回復しよう。"},
+  {icon:"🤝",msg:"にがてなことは、\nなかまにまかせよう。"},
+  {icon:"🌈",msg:"ぼうけんのしょ、\nきえてないよ。あんしんして。"},
+  {icon:"✨",msg:"いまのしごと、\nほんとうにあってる？"}
+];
+const MSG_SELECT = [
+  {icon:"🎮",msg:"しごとは、ゲームじゃない。\nでも、タイプはある。"},
+  {icon:"🌀",msg:"じぶんのことを\nいちばん知っているのは、じぶんだ。"},
+  {icon:"🔮",msg:"どのルートをえらんでも、\nそれがきみのぼうけんだ。"}
+];
+const MSG_START = [
+  {icon:"🎯",msg:"さあ、はじまりだ。\nきみのキャリアを、しろう。"},
+  {icon:"🌿",msg:"ゆっくりでいい。\nじぶんのペースで進もう。"},
+  {icon:"⭐",msg:"どのタイプでも、\nかがやける場所がある。"}
+];
+
+let msgIdxA=0, msgIdxB=0, msgIdxSelect=0, msgIdxStart=0;
+
+function showPopup(msgs, idxRef, key){
+  const m = msgs[idxRef % msgs.length];
+  document.getElementById("popup-icon").textContent = m.icon;
+  document.getElementById("popup-msg").textContent = m.msg;
+  document.getElementById("popup").classList.add("active");
+  if(key==="a") msgIdxA++;
+  else if(key==="b") msgIdxB++;
+  else if(key==="select") msgIdxSelect++;
+  else if(key==="start") msgIdxStart++;
+}
+function closePopup(){ document.getElementById("popup").classList.remove("active"); }
+
+document.getElementById("btn-a").onclick = ()=>showPopup(MSG_A, msgIdxA, "a");
+document.getElementById("btn-b").onclick = ()=>showPopup(MSG_B, msgIdxB, "b");
+document.getElementById("btn-select").onclick = ()=>showPopup(MSG_SELECT, msgIdxSelect, "select");
+document.getElementById("btn-start").onclick = ()=>showPopup(MSG_START, msgIdxStart, "start");
+
+// ========== クイズロジック ==========
+let current = 0;
+let scores = [0,0,0,0,0];
+
+function renderQ(){
+  const q = QA[current];
+  document.getElementById("prog-fill").style.width = ((current+1)/QA.length*100)+"%";
+  document.getElementById("gb-qnum").textContent = "しつもん "+(current+1)+" / "+QA.length;
+  document.getElementById("gb-qtext").textContent = q.q;
+  const ch = document.getElementById("gb-choices");
+  ch.innerHTML = "";
+  q.opts.forEach(([label, typeIdx])=>{
+    const btn = document.createElement("button");
+    btn.className = "gb-choice";
+    btn.textContent = label;
+    btn.onclick = ()=>{
+      scores[typeIdx]++;
+      current++;
+      if(current >= QA.length) showTransit();
+      else renderQ();
+    };
+    ch.appendChild(btn);
+  });
+}
+
+function showTransit(){
+  const sorted = scores.map((s,i)=>({s,i})).sort((a,b)=>b.s-a.s);
+  const main = TYPES[sorted[0].i];
+  document.getElementById("quiz-view").style.display="none";
+  document.getElementById("transit-view").style.display="block";
+  document.getElementById("tr-icon").textContent = main.icon;
+  document.getElementById("tr-name").textContent = main.name;
+  document.getElementById("tr-sub").textContent = main.en;
+  document.getElementById("go-result-btn").onclick = showResult;
+}
+
+function showResult(){
+  const sorted = scores.map((s,i)=>({s,i})).sort((a,b)=>b.s-a.s);
+  const mi = sorted[0].i, si = sorted[1].i;
+  const main = TYPES[mi], sub = TYPES[si], tc = main.tc;
+  const total = scores.reduce((a,b)=>a+b,0)||1;
+
+  // ヒーロー
+  document.getElementById("rp-hero").style.background = tc.heroGrad;
+  document.getElementById("rp-icon-circle").style.background = "rgba(255,255,255,0.2)";
+  document.getElementById("rp-icon").textContent = main.icon;
+  document.getElementById("rp-main-name").textContent = main.name;
+  document.getElementById("rp-sub-name").textContent = main.en + "  |  サブ: " + sub.name;
+
+  // 説明
+  document.getElementById("rp-main-desc").textContent = main.mainDesc;
+  document.getElementById("rp-sub-desc").textContent = "サブタイプ「"+sub.name+"」の影響："+sub.subDesc;
+  const combo = document.getElementById("rp-combo");
+  combo.textContent = "✦ "+COMBOS[mi][si];
+  combo.style.background = tc.comboBg;
+
+  // 強み
+  document.getElementById("rp-strengths").innerHTML = main.strengths.map(s=>`
+    <div class="rp-str-item" style="border-bottom-color:${tc.accent};">
+      <span class="rp-str-icon" style="color:${tc.bg};">▶</span>
+      <span class="rp-str-text">${s}</span>
+    </div>`).join("");
+
+  // STEP1表示、STEP2-3フェード
+  document.getElementById("rp-step1").innerHTML = `
+    <div class="rp-step">
+      <div class="rp-step-badge" style="background:${tc.bg};">${main.grow[0].phase}</div>
+      <div class="rp-step-text">${main.grow[0].text}</div>
+    </div>`;
+  document.getElementById("rp-steps23").innerHTML = main.grow.slice(1).map(g=>`
+    <div class="rp-step">
+      <div class="rp-step-badge" style="background:${tc.bg};">${g.phase}</div>
+      <div class="rp-step-text">${g.text}</div>
+    </div>`).join("");
+  const fade = document.getElementById("rp-fade-overlay");
+  fade.style.background = `linear-gradient(to bottom, transparent, #fff 60%)`;
+  document.getElementById("rp-step-note-btn").style.background = tc.noteBtn;
+  document.getElementById("rp-step-note-btn").onclick = ()=>{ window.open("https://note.com/your-note-url","_blank"); };
+
+  // スコア
+  document.getElementById("rp-score").innerHTML = TYPES.map((t,i)=>`
+    <div class="rp-score-row">
+      <span class="rp-score-label">${t.icon} ${t.name.replace("タイプ","")}</span>
+      <div class="rp-score-track" style="background:${tc.trackBg};">
+        <div class="rp-score-fill" style="width:${Math.round(scores[i]/total*100)}%;background:${tc.bg};"></div>
+      </div>
+      <span class="rp-score-num">${Math.round(scores[i]/total*100)}%</span>
+    </div>`).join("");
+
+  // note誘導
+  const noteBox = document.getElementById("rp-note-box");
+  noteBox.style.borderColor = tc.bg;
+  document.getElementById("rp-note-text").textContent = main.noteText;
+  document.getElementById("rp-note-tags").innerHTML = main.noteTags.map(t=>`<span class="rp-note-tag" style="background:${tc.bg};">${t}</span>`).join("");
+  document.getElementById("rp-note-btn").style.background = tc.noteBtn;
+  document.getElementById("rp-note-btn").onclick = ()=>{ window.open("https://note.com/your-note-url","_blank"); };
+
+  document.getElementById("restart-btn").onclick = restart;
+
+  // 切り替え
+  document.getElementById("gb-wrap").style.display = "none";
+  document.getElementById("result-page").style.display = "block";
+  window.scrollTo(0,0);
+}
+
+function restart(){
+  current=0; scores=[0,0,0,0,0];
+  document.getElementById("result-page").style.display="none";
+  document.getElementById("gb-wrap").style.display="block";
+  document.getElementById("transit-view").style.display="none";
+  document.getElementById("quiz-view").style.display="block";
+  renderQ();
+}
+
+renderQ();
+</script>
+</body>
+</html>
